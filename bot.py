@@ -2,8 +2,19 @@ import json
 import os
 import random
 from uuid import uuid4
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+
+# === Import help handler ===
+from help import get_help_handler
+
+# === Import course list handler ===
+from lists import get_courselist_handler
+
+
+# === Auto-clean approved.json on bot start ===
+import fix_json
+fix_json.clean_json('approved.json')
 
 # === CONFIG ===
 TOKEN = '7846786334:AAFNwjBQq7gdnwzdl7EKi4Nre2tI9WMFISk'
@@ -43,8 +54,9 @@ admin_delete_reject_states = {}
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Welcome to BRACU Resource Bot 📚\n\n"
-        "Type !CSE421 (with your course code) to get resources.\n"
-        "Use /upload to contribute resources. Admin approval is required.\n\n"
+        "➡️Type !CSE421 (with your course code) to get resources.\n\n"
+        "➡️Type or use /upload to contribute resources. Admin approval is required.\n\n"
+        "➡️Type or use /help for all the instructions and features.\n\n"
         "Let's help each other by sharing resources! 🤝"
     )
 
@@ -112,6 +124,10 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         files_found = []
         for key, entry in approved_data.items():
+            # === PATCHED: skip broken entry safely ===
+            if 'file_type' not in entry or 'file_id' not in entry:
+                continue
+
             if entry['course_code'] == course_code:
                 entry_copy = entry.copy()
                 entry_copy['resource_key'] = key  # Attach key for delete reference
@@ -178,6 +194,12 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Clear state
         del admin_delete_reject_states[user.id]
         return
+
+    # === Reply to random message ===
+    await update.message.reply_text(
+        "ℹ️ I didn’t understand that.\nType `/help` to see how to use the bot.",
+        parse_mode='Markdown'
+    )
 
 async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -284,7 +306,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await context.bot.send_document(chat_id=uploader_id, document=file_id, caption=caption)
 
-    # === Handle request_delete button ===
     elif data.startswith("request_delete"):
         _, resource_key = data.split("|")
         approved_data = load_json(APPROVED_FILE)
@@ -301,7 +322,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         await query.message.reply_text("📝 Please type the reason why you think this resource should be deleted:")
 
-    # === Handle admin delete approve/reject ===
     elif data.startswith("delete_approve") or data.startswith("delete_reject"):
         parts = data.split("|")
         action, resource_key, requester_id = parts[0], parts[1], int(parts[2])
@@ -325,20 +345,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=requester_id, text=caption)
 
         elif action == "delete_reject":
-            # Store info to await reason
             admin_delete_reject_states[ADMIN_ID] = {
                 'requester_id': requester_id,
                 'course_code': course_code
             }
             await query.message.reply_text("✏️ Please type the reason why you are rejecting the delete request:")
 
-# === MAIN ===
+# === Setup bot commands ===
+async def setup_bot(app):
+    await app.bot.set_my_commands([
+        BotCommand("start", "Start the bot"),
+        BotCommand("upload", "Upload a new resource"),
+        BotCommand("help", "Get instructions on using the bot"),
+    ])
 
+# === MAIN ===
 def main():
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).post_init(setup_bot).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("upload", upload))
+    app.add_handler(get_help_handler())  # Import help handler
+    app.add_handler(get_courselist_handler())
     app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, receive_file))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     app.add_handler(CallbackQueryHandler(button_handler))
