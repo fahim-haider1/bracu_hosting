@@ -251,13 +251,6 @@
     "uploader_id": 5214922760,
     "uploader_name": "Saitama"
   },
-  "4b4f429f": {
-    "course_code": "CSE260",
-    "file_id": "BQACAgUAAxkBAAIEXGgX_O-VKMUw8KcU1-7PDv6ZVKNrAALUEQACmSHBVEdUFgaCWpaPNgQ",
-    "file_type": "document",
-    "uploader_id": 5214922760,
-    "uploader_name": "Saitama"
-  },
   "1e074400": {
     "course_code": "CSE251",
     "file_id": "BQACAgUAAxkBAAIEemgX_fAZCjYERZNzD8ITlAyOgjHfAALYEQACmSHBVH-acfUpYhxRNgQ",
@@ -713,18 +706,81 @@
     "uploader_id": 5214922760,
     "uploader_name": "Saitama"
   },
-  "f5abeaee": {
-    "course_code": "CSE220",
-    "file_id": "BQACAgUAAxkBAAIG_mgYulCm0LXH_BN9CByW5rpz_GXZAAIpFgACH-vJVD47Xyd4pwykNgQ",
-    "file_type": "document",
-    "uploader_id": 5214922760,
-    "uploader_name": "Saitama"
-  },
   "a3de6214": {
     "course_code": "CSE220",
     "file_id": "BQACAgUAAxkBAAIHBmgYumaJo3GLZyytO1xsY5JFmuy6AAIqFgACH-vJVGDYBCtawwfQNgQ",
     "file_type": "document",
     "uploader_id": 5214922760,
     "uploader_name": "Saitama"
+  },
+  "55ba1a36": {
+    "course_code": "STA201",
+    "file_id": "BQACAgUAAxkBAAIKAmgY17bJVO1DMXkeUKlRFA4--BKvAAKeFwACPtPAVAeF9h5YZRXdNgQ",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "cc68796b": {
+    "course_code": "CSE331",
+    "file_id": "BQACAgUAAxkBAAIJ-2gY120eBZQnxnxdEjLGrr2oxFD6AAKdFwACPtPAVBkk9YcGtV_dNgQ",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "eef58416": {
+    "course_code": "CSE320",
+    "file_id": "BQACAgUAAxkBAAIJ8mgY1zXmbUOzFiuj8n-Bn3PeCxotAAKcFwACPtPAVEdeU91OxocgNgQ",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "20c82816": {
+    "course_code": "CSE320",
+    "file_id": "BQACAgUAAxkBAAIJ5mgY1xhgybFWT1VvynCyxZS45QukAAKbFwACPtPAVLI4SysJ5ksKNgQ",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "ff16e40e": {
+    "course_code": "CSE422",
+    "file_id": "BQACAgUAAxkBAAIJ22gY1vMdxaVdPUqjXI9bm1E-AAH5RgACmhcAAj7TwFRCDOhjD91VwjYE",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "2d664f48": {
+    "course_code": "PHY112",
+    "file_id": "BQACAgUAAxkBAAIKLGgY2NelBKurOk18FrcijyMYDtmlAAKfFwACPtPAVFKQOWnTUxhRNgQ",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "52f7171a": {
+    "course_code": "MAT120",
+    "file_id": "BQACAgUAAxkBAAIKM2gY2SFvRE9bDxTdCz884ywCAoZKAAKgFwACPtPAVILu3gzsINmxNgQ",
+    "file_type": "document",
+    "uploader_id": 1773362861,
+    "uploader_name": "Minhazul"
+  },
+  "3bd79eb3": {
+    "course_code": "CSE220",
+    "file_id": "BQACAgUAAxkBAAIP-mgY_f24g96qT8cwMTEg5SWwT4X1AAJpFgACDtTJVBMVcu7e7TKANgQ",
+    "file_type": "document",
+    "uploader_id": 2074675748,
+    "uploader_name": "mk"
+  },
+  "16ce1997": {
+    "course_code": "CSE111",
+    "file_id": "BQACAgUAAxkBAAIRgmgZA3T4Uxn66Q6DvLXrHVUY8iHmAAKhFgACdI_IVINmg9gqj6znNgQ",
+    "file_type": "document",
+    "uploader_id": 6946333832,
+    "uploader_name": "Tanzeebul"
+  },
+  "6039b38b": {
+    "course_code": "MSC301",
+    "file_id": "BQACAgUAAxkBAAITpWgZJE06VXucMm90D9wMyE1S3-VmAALAFgACtKfJVHQ14r8NXJD0NgQ",
+    "file_type": "document",
+    "uploader_id": 5043114411,
+    "uploader_name": "Sadman"
   }
 }

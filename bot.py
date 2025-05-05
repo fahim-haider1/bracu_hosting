@@ -4,6 +4,8 @@ import random
 from uuid import uuid4
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from admin import load_config, get_admin_handler
+
 
 # === Import help handler ===
 from help import get_help_handler
@@ -223,20 +225,66 @@ async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     course_code = user_states[user.id]['course_code']
     del user_states[user.id]
 
-    pending_data = load_json(PENDING_FILE)
-    short_key = str(uuid4())[:8]
+    config = load_config()
+    admin_approval_required = config.get('admin_approval_required', True)
 
-    pending_data[short_key] = {
-        "course_code": course_code,
-        "file_id": file_id,
-        "file_type": file_type,
-        "uploader_id": user.id,
-        "uploader_name": user.first_name
-    }
+    if admin_approval_required:
+        # Store in pending.json
+        pending_data = load_json(PENDING_FILE)
+        short_key = str(uuid4())[:8]
 
-    save_json(pending_data, PENDING_FILE)
+        pending_data[short_key] = {
+            "course_code": course_code,
+            "file_id": file_id,
+            "file_type": file_type,
+            "uploader_id": user.id,
+            "uploader_name": user.first_name
+        }
 
-    await update.message.reply_text(f"File received for {course_code}. Awaiting admin approval.")
+        save_json(pending_data, PENDING_FILE)
+
+        await update.message.reply_text(f"File received for {course_code}. Awaiting admin approval.")
+
+        buttons = [
+            [InlineKeyboardButton("✅ Approve", callback_data=f"approve|{short_key}"),
+             InlineKeyboardButton("❌ Reject", callback_data=f"reject|{short_key}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+
+        caption = f"📥 Pending resource:\nCourse: {course_code}\nUploader: {user.first_name}\n\nApprove or Reject below:"
+
+        if file_type == 'photo':
+            await context.bot.send_photo(
+                chat_id=ADMIN_ID,
+                photo=file_id,
+                caption=caption,
+                reply_markup=reply_markup
+            )
+        else:
+            await context.bot.send_document(
+                chat_id=ADMIN_ID,
+                document=file_id,
+                caption=caption,
+                reply_markup=reply_markup
+            )
+    else:
+        # Auto-approve (directly save to approved.json)
+        approved_data = load_json(APPROVED_FILE)
+        approved_key = str(uuid4())[:8]
+
+        approved_data[approved_key] = {
+            "course_code": course_code,
+            "file_id": file_id,
+            "file_type": file_type,
+            "uploader_id": user.id,
+            "uploader_name": user.first_name
+        }
+
+        save_json(approved_data, APPROVED_FILE)
+
+        await update.message.reply_text(f"✅ Your file for {course_code} has been auto-approved and added!")
+
+
 
     buttons = [
         [InlineKeyboardButton("✅ Approve", callback_data=f"approve|{short_key}"),
@@ -370,6 +418,7 @@ def main():
     app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, receive_file))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(get_admin_handler())
 
     print("Bot running...")
     app.run_polling()
