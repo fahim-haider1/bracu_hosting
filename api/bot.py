@@ -24,8 +24,7 @@ TOKEN = os.getenv('BOT_TOKEN', '7846786334:AAFNwjBQq7gdnwzdl7EKi4Nre2tI9WMFISk')
 ADMIN_ID = int(os.getenv('ADMIN_ID', '5214922760'))
 
 # ===== FILE PATHS =====
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-os.makedirs(DATA_DIR, exist_ok=True)  # Create data directory if not exists
+DATA_DIR = '/tmp'  # Vercel only allows writes to /tmp
 
 APPROVED_FILE = os.path.join(DATA_DIR, 'approved.json')
 PENDING_FILE = os.path.join(DATA_DIR, 'pending.json')
