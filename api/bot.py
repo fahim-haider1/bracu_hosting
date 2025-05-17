@@ -3,28 +3,16 @@ import json
 import random
 from uuid import uuid4
 from http.server import BaseHTTPRequestHandler
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    BotCommand,
-    InputFile
-)
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    ContextTypes,
-    filters
-)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, InputFile
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
 # ===== CONFIGURATION =====
 TOKEN = os.getenv('BOT_TOKEN', '7846786334:AAFNwjBQq7gdnwzdl7EKi4Nre2tI9WMFISk')
 ADMIN_ID = int(os.getenv('ADMIN_ID', '5214922760'))
 
 # ===== FILE PATHS =====
-DATA_DIR = '/tmp'  # Vercel only allows writes to /tmp
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+os.makedirs(DATA_DIR, exist_ok=True)
 
 APPROVED_FILE = os.path.join(DATA_DIR, 'approved.json')
 PENDING_FILE = os.path.join(DATA_DIR, 'pending.json')
@@ -65,6 +53,16 @@ def load_config():
         save_json(config, CONFIG_FILE)
         return config
 
+# ===== HANDLER IMPORTS =====
+try:
+    from help import get_help_handler
+    from lists import get_courselist_handler
+    from admin import get_admin_handler
+except ImportError:
+    from api.help import get_help_handler
+    from api.lists import get_courselist_handler
+    from api.admin import get_admin_handler
+
 # ===== STATE MANAGEMENT =====
 user_states = {}
 admin_delete_reject_states = {}
@@ -89,7 +87,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     text = update.message.text.strip()
 
-    # Handle delete reason
     if user.id in user_states and user_states[user.id]['state'] == 'awaiting_delete_reason':
         delete_info = user_states[user.id]
         resource_entry = delete_info['resource_entry']
@@ -99,10 +96,8 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resource_key = delete_info['resource_key']
         reason = text
 
-        # Reset state
         del user_states[user.id]
 
-        # Send delete request to admin
         buttons = [
             [InlineKeyboardButton("✅ Approve Delete", callback_data=f"delete_approve|{resource_key}|{user.id}"),
              InlineKeyboardButton("❌ Reject Delete", callback_data=f"delete_reject|{resource_key}|{user.id}")]
@@ -135,7 +130,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Your delete request has been sent to admin for review.")
         return
 
-    # Resource request
     text_upper = text.upper()
     if text_upper.startswith("!"): 
         course_code = text_upper[1:]
@@ -188,7 +182,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-    # Upload flow
     if user.id in user_states and user_states[user.id]['state'] == 'awaiting_course_code':
         user_states[user.id]['state'] = 'awaiting_file'
         user_states[user.id]['course_code'] = text_upper
@@ -197,7 +190,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Handle admin reject reason
     if user.id == ADMIN_ID and user.id in admin_delete_reject_states:
         info = admin_delete_reject_states[user.id]
         requester_id = info['requester_id']
@@ -208,11 +200,9 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=requester_id, text=caption)
         await update.message.reply_text("✅ Rejection reason sent to requester.")
 
-        # Clear state
         del admin_delete_reject_states[user.id]
         return
 
-    # Default reply
     await update.message.reply_text(
         "ℹ️ I didn't understand that.\nType `/help` to see how to use the bot.",
         parse_mode='Markdown'
@@ -387,7 +377,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             }
             await query.message.reply_text("✏️ Please type the reason why you are rejecting the delete request:")
 
-# ===== VERCEL WEBHOOK HANDLER =====
+def setup_handlers():
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("upload", upload))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
+    app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, receive_file))
+    app.add_handler(CallbackQueryHandler(button_handler))
+    
+    app.add_handler(get_help_handler())
+    app.add_handler(get_courselist_handler())
+    app.add_handler(get_admin_handler())
+
+app = Application.builder().token(TOKEN).build()
+setup_handlers()
+
 class WebhookHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
@@ -403,34 +406,12 @@ class WebhookHandler(BaseHTTPRequestHandler):
         finally:
             self.end_headers()
 
-# ===== BOT INITIALIZATION =====
-def setup_handlers():
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("upload", upload))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
-    app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, receive_file))
-    app.add_handler(CallbackQueryHandler(button_handler))
-
-    # Import and add other handlers
-    from help import get_help_handler
-    from lists import get_courselist_handler
-    from admin import get_admin_handler
-    
-    app.add_handler(get_help_handler())
-    app.add_handler(get_courselist_handler())
-    app.add_handler(get_admin_handler())
-
-app = Application.builder().token(TOKEN).build()
-setup_handlers()
-
-# ===== VERCEL ENTRY POINT =====
 def handler(request):
     webhook_handler = WebhookHandler()
     webhook_handler.request = request
     webhook_handler.do_POST()
     return {'statusCode': 200}
 
-# ===== LOCAL TESTING =====
 if __name__ == '__main__':
     print("Bot running in polling mode...")
     app.run_polling()
